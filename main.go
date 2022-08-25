@@ -20,10 +20,6 @@ type DaemonSetClient struct {
 
 var daemonsetClient = DaemonSetClient{}
 
-func main() {
-	fmt.Println("Hello world")
-}
-
 func SetDaemonSetClient(k8sClient kubernetes.Interface) {
 	daemonsetClient.K8sClient = k8sClient
 }
@@ -132,11 +128,10 @@ func DeleteDaemonSet(daemonSetName, namespace string) error {
 	if err := daemonsetClient.K8sClient.AppsV1().DaemonSets(namespace).Delete(context.TODO(), daemonSetName, metav1.DeleteOptions{
 		PropagationPolicy: &deletePolicy,
 	}); err != nil {
-		logrus.Infof("The daemonset (%d) deletion is unsuccessful due to %+v", daemonSetName, err.Error())
+		logrus.Infof("The daemonset (%s) deletion is unsuccessful due to %+v", daemonSetName, err.Error())
 	}
 
-	doneCleanUp := false
-	for start := time.Now(); !doneCleanUp && time.Since(start) < Timeout; {
+	for start := time.Now(); time.Since(start) < Timeout; {
 
 		pods, err := daemonsetClient.K8sClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: "name=" + daemonSetName})
 		if err != nil {
@@ -144,7 +139,6 @@ func DeleteDaemonSet(daemonSetName, namespace string) error {
 		}
 
 		if len(pods.Items) == 0 {
-			doneCleanUp = true
 			break
 		}
 		time.Sleep(waitingTime)
@@ -183,7 +177,11 @@ func CreateDaemonSet(daemonSetName, namespace, containerName, imageWithVersion s
 	if err != nil {
 		return nil, err
 	}
-	WaitDaemonsetReady(namespace, daemonSetName, timeout)
+
+	err = WaitDaemonsetReady(namespace, daemonSetName, timeout)
+	if err != nil {
+		return nil, err
+	}
 
 	logrus.Infof("Deamonset is ready")
 
