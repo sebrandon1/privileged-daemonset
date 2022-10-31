@@ -35,7 +35,7 @@ func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion
 	matchLabels := make(map[string]string)
 	matchLabels["name"] = dsName
 
-	if labelsMap != nil && len(labelsMap) != 0 {
+	if len(labelsMap) != 0 {
 		for key, value := range labelsMap {
 			matchLabels[key] = value
 		}
@@ -168,9 +168,9 @@ func doesDaemonSetExist(daemonSetName, namespace string) bool {
 
 // This function is used to create a daemonset with the specified name, namespace, container name and image with the timeout to check
 // if the deployment is ready and all daemonset pods are running fine
-func CreateDaemonSet(daemonSetName, namespace, containerName, imageWithVersion string, timeout time.Duration) (*v1core.PodList, error) {
+func CreateDaemonSet(daemonSetName, namespace, containerName, imageWithVersion string, labels map[string]string, timeout time.Duration) (*v1core.PodList, error) {
 
-	rebootDaemonSet := createDaemonSetsTemplate(daemonSetName, namespace, containerName, imageWithVersion)
+	daemonSet := createDaemonSetsTemplate(daemonSetName, namespace, containerName, imageWithVersion, labels)
 
 	if doesDaemonSetExist(daemonSetName, namespace) {
 		err := DeleteDaemonSet(daemonSetName, namespace)
@@ -180,7 +180,7 @@ func CreateDaemonSet(daemonSetName, namespace, containerName, imageWithVersion s
 	}
 
 	logrus.Infof("Creating daemonset %s", daemonSetName)
-	_, err := daemonsetClient.K8sClient.AppsV1().DaemonSets(namespace).Create(context.TODO(), rebootDaemonSet, metav1.CreateOptions{})
+	_, err := daemonsetClient.K8sClient.AppsV1().DaemonSets(namespace).Create(context.TODO(), daemonSet, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
