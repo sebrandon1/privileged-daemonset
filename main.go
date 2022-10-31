@@ -26,13 +26,20 @@ func SetDaemonSetClient(k8sClient kubernetes.Interface) {
 
 const waitingTime = 5 * time.Second
 
-func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion string) *v1.DaemonSet {
+func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion string, labelsMap map[string]string) *v1.DaemonSet {
 
 	dsAnnotations := make(map[string]string)
 	dsAnnotations["debug.openshift.io/source-container"] = containerName
 	dsAnnotations["openshift.io/scc"] = "node-exporter"
+
 	matchLabels := make(map[string]string)
 	matchLabels["name"] = dsName
+
+	if labelsMap != nil && len(labelsMap) != 0 {
+		for key, value := range labelsMap {
+			matchLabels[key] = value
+		}
+	}
 
 	var trueBool bool = true
 	var zeroInt int64 = 0
