@@ -88,6 +88,8 @@ func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion
 					PreemptionPolicy: &preempt,
 					Priority:         &zeroInt32,
 					HostNetwork:      true,
+					HostIPC:          true,
+					HostPID:          true,
 					Tolerations: []v1core.Toleration{
 						{
 							Effect:            "NoExecute",
