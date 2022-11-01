@@ -62,7 +62,7 @@ func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion
 		TTY:                    true,
 		VolumeMounts: []v1core.VolumeMount{
 			{
-				MountPath: "/host",
+				MountPath: "/",
 				Name:      "host",
 			},
 		},
