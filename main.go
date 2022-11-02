@@ -142,23 +142,18 @@ func DeleteDaemonSet(daemonSetName, namespace string) error {
 	}); err != nil {
 		logrus.Infof("The daemonset (%s) deletion is unsuccessful due to %+v", daemonSetName, err.Error())
 	}
-	allPodsRemoved := false
-	for start := time.Now(); time.Since(start) < Timeout; {
-
-		pods, err := daemonsetClient.K8sClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: "name=" + daemonSetName})
-		if err != nil {
-			return fmt.Errorf("failed to get pods, err: %s", err)
-		}
-
-		if len(pods.Items) == 0 {
-			allPodsRemoved = true
+	dsDeleted := false
+	start := time.Now()
+	for time.Since(start) < Timeout {
+		if !doesDaemonSetExist(daemonSetName, namespace) {
+			dsDeleted =true
 			break
 		}
 		time.Sleep(waitingTime)
 	}
 
-	if !allPodsRemoved {
-		return fmt.Errorf("timeout waiting for daemonset's pods to be deleted")
+	if !dsDeleted {
+		return fmt.Errorf("timeout waiting for daemonset's to be deleted")
 	}
 	
 	logrus.Infof("Successfully cleaned up daemonset %s", daemonSetName)
