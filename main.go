@@ -8,7 +8,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/apps/v1"
 	v1core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -26,7 +25,7 @@ func SetDaemonSetClient(k8sClient kubernetes.Interface) {
 
 const waitingTime = 5 * time.Second
 
-func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion string, labelsMap map[string]string) *v1.DaemonSet {
+func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion string, labelsMap map[string]string) *appsv1.DaemonSet {
 
 	dsAnnotations := make(map[string]string)
 	dsAnnotations["debug.openshift.io/source-container"] = containerName
@@ -68,14 +67,14 @@ func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion
 		},
 	}
 
-	return &v1.DaemonSet{
+	return &appsv1.DaemonSet{
 
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        dsName,
 			Namespace:   namespace,
 			Annotations: dsAnnotations,
 		},
-		Spec: v1.DaemonSetSpec{
+		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: matchLabels,
 			},
@@ -192,7 +191,7 @@ func CreateDaemonSet(daemonSetName, namespace, containerName, imageWithVersion s
 		return nil, err
 	}
 
-	logrus.Infof("Deamonset is ready")
+	logrus.Infof("Daemonset is ready")
 
 	var ptpPods *v1core.PodList
 	ptpPods, err = daemonsetClient.K8sClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: "name=" + daemonSetName})
@@ -227,7 +226,7 @@ func WaitDaemonsetReady(namespace, name string, timeout time.Duration) error {
 				break
 			}
 		} else {
-			logrus.Warnf("Daemonset %s (ns %s) could not be deployed: DesiredNumberSheduled=%d - NodesCount=%d",
+			logrus.Warnf("Daemonset %s (ns %s) could not be deployed: DesiredNumberScheduled=%d - NodesCount=%d",
 				name, namespace, daemonSet.Status.DesiredNumberScheduled, nodesCount)
 		}
 
