@@ -106,6 +106,10 @@ func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion
 							Effect: "NoSchedule",
 							Key:    "node-role.kubernetes.io/master",
 						},
+						{
+							Effect: "NoSchedule",
+							Key:    "node-role.kubernetes.io/control-plane",
+						},
 					},
 					Volumes: []v1core.Volume{
 						{
@@ -138,7 +142,7 @@ func DeleteDaemonSet(daemonSetName, namespace string) error {
 	}); err != nil {
 		logrus.Infof("The daemonset (%s) deletion is unsuccessful due to %+v", daemonSetName, err.Error())
 	}
-
+	allPodsRemoved := false
 	for start := time.Now(); time.Since(start) < Timeout; {
 
 		pods, err := daemonsetClient.K8sClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: "name=" + daemonSetName})
@@ -147,11 +151,16 @@ func DeleteDaemonSet(daemonSetName, namespace string) error {
 		}
 
 		if len(pods.Items) == 0 {
+			allPodsRemoved = true
 			break
 		}
 		time.Sleep(waitingTime)
 	}
 
+	if !allPodsRemoved {
+		return fmt.Errorf("timeout waiting for daemonset's pods to be deleted")
+	}
+	
 	logrus.Infof("Successfully cleaned up daemonset %s", daemonSetName)
 	return nil
 }
