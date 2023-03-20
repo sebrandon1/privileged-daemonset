@@ -4,9 +4,9 @@ go 1.20
 
 require (
 	github.com/sirupsen/logrus v1.9.0
-	k8s.io/api v0.26.2
-	k8s.io/apimachinery v0.26.2
-	k8s.io/client-go v0.26.2
+	k8s.io/api v0.26.3
+	k8s.io/apimachinery v0.26.3
+	k8s.io/client-go v0.26.3
 	k8s.io/utils v0.0.0-20230313181309-38a27ef9d749
 )
 
@@ -46,6 +46,4 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-retract (
-	v1.0.0 // Throwing errors in dependabot.
-)
+retract v1.0.0 // Throwing errors in dependabot.
