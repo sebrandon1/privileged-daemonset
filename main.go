@@ -39,10 +39,8 @@ func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion
 	matchLabels := make(map[string]string)
 	matchLabels["name"] = dsName
 
-	if len(labelsMap) != 0 {
-		for key, value := range labelsMap {
-			matchLabels[key] = value
-		}
+	for key, value := range labelsMap {
+		matchLabels[key] = value
 	}
 
 	rootUser := pointer.Int64(0)
@@ -144,7 +142,7 @@ func DeleteDaemonSet(daemonSetName, namespace string) error {
 	if err := daemonsetClient.K8sClient.AppsV1().DaemonSets(namespace).Delete(context.TODO(), daemonSetName, metav1.DeleteOptions{
 		PropagationPolicy: &deletePolicy,
 	}); err != nil {
-		logrus.Infof("The daemonset (%s) deletion is unsuccessful due to %+v", daemonSetName, err.Error())
+		logrus.Warnf("The daemonset (%s) deletion is unsuccessful due to %+v", daemonSetName, err.Error())
 	}
 	dsDeleted := false
 	start := time.Now()
@@ -160,7 +158,7 @@ func DeleteDaemonSet(daemonSetName, namespace string) error {
 		return fmt.Errorf("timeout waiting for daemonset's to be deleted")
 	}
 
-	logrus.Infof("Successfully cleaned up daemonset %s", daemonSetName)
+	logrus.Infof("Successfully deleted daemonset %s", daemonSetName)
 	return nil
 }
 
@@ -178,10 +176,10 @@ func doesDaemonSetExist(daemonSetName, namespace string) bool {
 func IsDaemonSetReady(daemonSetName, namespace, image string) bool {
 	const hoursPerWeek = 168 // 7 days
 
-	// The daemon set will be considered not ready if it does not exist
+	// The daemonset will be considered not ready if it does not exist
 	ds, err := daemonsetClient.K8sClient.AppsV1().DaemonSets(namespace).Get(context.TODO(), daemonSetName, metav1.GetOptions{})
 	if err != nil {
-		logrus.Infof("could not get daemon set %s, err=%s", daemonSetName, err.Error())
+		logrus.Infof("could not get daemonset %s, err=%s", daemonSetName, err.Error())
 		return false
 	}
 
