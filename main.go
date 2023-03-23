@@ -364,18 +364,10 @@ func ConfigurePrivilegedServiceAccount(namespace string) error {
 }
 
 func initNamespace(namespace string) (err error) {
-	// delete namespace if present
-	if namespaceIsPresent(namespace) {
-		err = namespaceDelete(namespace)
-		if err != nil {
-			logrus.Warnf("could not delete namespace=%s, err=%s", namespace, err)
-		}
-		// wait for the namespace to be deleted
-		err = namespaceWaitForDeletion(namespace, namespaceDeleteTimeout)
-		if err != nil {
-			return err
-		}
-		logrus.Infof("namespace %s deleted", namespace)
+	err =
+		DeleteNamespaceIfPresent(namespace)
+	if err != nil {
+		return fmt.Errorf("could not delete (if present) namespace=%s, err=%s", namespace, err)
 	}
 
 	// create namespace
@@ -388,18 +380,6 @@ func initNamespace(namespace string) (err error) {
 	err = ConfigurePrivilegedServiceAccount(namespace)
 	if err != nil {
 		return fmt.Errorf("could not configure privileged rights, err=%s", err)
-	}
-	return nil
-}
-
-// delete namespace
-func DeleteDsNamespace(namespace string) error {
-	// delete namespace if present
-	if namespaceIsPresent(namespace) {
-		err := namespaceDelete(namespace)
-		if err != nil {
-			return fmt.Errorf("could not delete namespace=%s, err=%s", namespace, err)
-		}
 	}
 	return nil
 }
@@ -443,4 +423,23 @@ func namespaceCreate(namespace string) error {
 		return nil
 	}
 	return err
+}
+
+func DeleteNamespaceIfPresent(namespace string) (err error) {
+	// delete namespace if present
+	if !namespaceIsPresent(namespace) {
+		return nil
+	}
+	err = namespaceDelete(namespace)
+	if err != nil {
+		logrus.Warnf("could not delete namespace=%s, err=%s", namespace, err)
+	}
+	// wait for the namespace to be deleted
+	err = namespaceWaitForDeletion(namespace, namespaceDeleteTimeout)
+	if err != nil {
+		return fmt.Errorf("failed waiting for namespace to be deleted, err=%s", err)
+	}
+	logrus.Infof("namespace %s deleted", namespace)
+
+	return nil
 }
