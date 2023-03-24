@@ -394,10 +394,6 @@ func namespaceIsPresent(namespace string) bool {
 	return true
 }
 
-func namespaceDelete(aNamespace string) error {
-	return daemonsetClient.K8sClient.CoreV1().Namespaces().Delete(context.Background(), aNamespace, metav1.DeleteOptions{})
-}
-
 // WaitForDeletion waits until the namespace will be removed from the cluster
 func namespaceWaitForDeletion(nsName string, timeout time.Duration) error {
 	return wait.PollImmediate(time.Second, timeout, func() (bool, error) {
@@ -430,7 +426,7 @@ func DeleteNamespaceIfPresent(namespace string) (err error) {
 	if !namespaceIsPresent(namespace) {
 		return nil
 	}
-	err = namespaceDelete(namespace)
+	err = daemonsetClient.K8sClient.CoreV1().Namespaces().Delete(context.Background(), namespace, metav1.DeleteOptions{})
 	if err != nil {
 		logrus.Warnf("could not delete namespace=%s, err=%s", namespace, err)
 	}
