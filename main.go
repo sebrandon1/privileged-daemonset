@@ -394,7 +394,7 @@ func namespaceIsPresent(namespace string) bool {
 
 // WaitForDeletion waits until the namespace will be removed from the cluster
 func namespaceWaitForDeletion(nsName string, timeout time.Duration) error {
-	return wait.PollImmediate(time.Second, timeout, func() (bool, error) {
+	return wait.PollUntilContextTimeout(context.TODO(), time.Second, timeout, true, func(ctx context.Context) (bool, error) {
 		_, err := daemonsetClient.K8sClient.CoreV1().Namespaces().Get(context.Background(), nsName, metav1.GetOptions{})
 		if k8serrors.IsNotFound(err) {
 			return true, nil
