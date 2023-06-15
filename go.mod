@@ -4,8 +4,8 @@ go 1.20
 
 require (
 	github.com/sirupsen/logrus v1.9.3
-	k8s.io/api v0.27.2
-	k8s.io/apimachinery v0.27.2
+	k8s.io/api v0.27.3
+	k8s.io/apimachinery v0.27.3
 	k8s.io/client-go v0.27.2
 	k8s.io/utils v0.0.0-20230313181309-38a27ef9d749
 )
