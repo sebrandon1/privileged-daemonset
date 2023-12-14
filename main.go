@@ -14,7 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
-	pointer "k8s.io/utils/pointer"
+	pointer "k8s.io/utils/ptr"
 )
 
 const (
@@ -50,14 +50,14 @@ func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion
 		matchLabels[key] = value
 	}
 
-	rootUser := pointer.Int64(0)
+	rootUser := pointer.To(int64(0))
 
 	container := v1core.Container{
 		Name:            containerName,
 		Image:           imageWithVersion,
 		ImagePullPolicy: "IfNotPresent",
 		SecurityContext: &v1core.SecurityContext{
-			Privileged: pointer.Bool(true),
+			Privileged: pointer.To(true),
 			RunAsUser:  rootUser,
 		},
 		Stdin:                  true,
@@ -74,7 +74,7 @@ func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion
 
 	preemptPolicyLowPrio := v1core.PreemptLowerPriority
 	hostPathTypeDir := v1core.HostPathDirectory
-	tolerationsSeconds := pointer.Int64(tolerationsPeriodSecs)
+	tolerationsSeconds := pointer.To(int64(tolerationsPeriodSecs))
 
 	return &appsv1.DaemonSet{
 
@@ -95,7 +95,7 @@ func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion
 					ServiceAccountName: roleSaName,
 					Containers:         []v1core.Container{container},
 					PreemptionPolicy:   &preemptPolicyLowPrio,
-					Priority:           pointer.Int32(0),
+					Priority:           pointer.To(int32(0)),
 					HostNetwork:        true,
 					HostIPC:            true,
 					HostPID:            true,
