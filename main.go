@@ -11,6 +11,7 @@ import (
 	v1core "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -38,7 +39,7 @@ const (
 )
 
 //nolint:funlen
-func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion string, labelsMap map[string]string) *appsv1.DaemonSet {
+func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion string, labelsMap map[string]string, cpuReq, cpuLim, memReq, memLim string) *appsv1.DaemonSet {
 	dsAnnotations := make(map[string]string)
 	dsAnnotations["debug.openshift.io/source-container"] = containerName
 	dsAnnotations["openshift.io/scc"] = "node-exporter"
@@ -71,7 +72,13 @@ func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion
 			},
 		},
 	}
-
+	// setting CPU and memory request/limits
+	container.Resources.Requests = v1core.ResourceList{}
+	container.Resources.Limits = v1core.ResourceList{}
+	container.Resources.Requests[v1core.ResourceCPU] = resource.MustParse(cpuReq)
+	container.Resources.Limits[v1core.ResourceCPU] = resource.MustParse(cpuLim)
+	container.Resources.Requests[v1core.ResourceMemory] = resource.MustParse(memReq)
+	container.Resources.Limits[v1core.ResourceMemory] = resource.MustParse(memLim)
 	preemptPolicyLowPrio := v1core.PreemptLowerPriority
 	hostPathTypeDir := v1core.HostPathDirectory
 	tolerationsSeconds := pointer.To(int64(tolerationsPeriodSecs))
@@ -207,14 +214,14 @@ func IsDaemonSetReady(daemonSetName, namespace, image string) bool {
 
 // This function is used to create a daemonset with the specified name, namespace, container name and image with the timeout to check
 // if the deployment is ready and all daemonset pods are running fine
-func CreateDaemonSet(daemonSetName, namespace, containerName, imageWithVersion string, labels map[string]string, timeout time.Duration) (aPodList *v1core.PodList, err error) {
+func CreateDaemonSet(daemonSetName, namespace, containerName, imageWithVersion string, labels map[string]string, timeout time.Duration, cpuReq, cpuLim, memReq, memLim string) (aPodList *v1core.PodList, err error) {
 	// first, initialize the namespace
 	err = initNamespace(namespace)
 	if err != nil {
 		return aPodList, fmt.Errorf("failed to initialize the privileged daemonset namespace, err=%s", err)
 	}
 
-	daemonSet := createDaemonSetsTemplate(daemonSetName, namespace, containerName, imageWithVersion, labels)
+	daemonSet := createDaemonSetsTemplate(daemonSetName, namespace, containerName, imageWithVersion, labels, cpuReq, cpuLim, memReq, memLim)
 
 	if doesDaemonSetExist(daemonSetName, namespace) {
 		err = DeleteDaemonSet(daemonSetName, namespace)
