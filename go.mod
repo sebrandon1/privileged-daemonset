@@ -1,6 +1,6 @@
 module github.com/test-network-function/privileged-daemonset
 
-go 1.22.4
+go 1.22.5
 
 require (
 	k8s.io/api v0.30.2
