@@ -1,4 +1,4 @@
-module github.com/test-network-function/privileged-daemonset
+module github.com/redhat-best-practices-for-k8s/privileged-daemonset
 
 go 1.22.5
 
