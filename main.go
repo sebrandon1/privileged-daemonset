@@ -243,6 +243,7 @@ func WaitDaemonsetReady(namespace, name string, timeout time.Duration) error {
 		return fmt.Errorf("failed to get node list, err:%s", err)
 	}
 
+	//nolint:gosec
 	nodesCount := int32(len(nodes.Items))
 	isReady := false
 	for start := time.Now(); !isReady && time.Since(start) < timeout; {

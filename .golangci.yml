@@ -49,7 +49,7 @@ linters:
     - dogsled
     - errcheck
     - exhaustive
-    - exportloopref
+    - copyloopvar
     - funlen
     - goconst
     - gocritic
@@ -89,7 +89,7 @@ linters:
   # - nestif
   # - noctx
   # - prealloc
-  # - exportloopref
+  # - copyloopvar
   # - structcheck
   # - testpackage
   # - wsl
