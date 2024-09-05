@@ -1,6 +1,6 @@
 module github.com/redhat-best-practices-for-k8s/privileged-daemonset
 
-go 1.22.6
+go 1.23.1
 
 require (
 	k8s.io/api v0.31.0
