@@ -13,7 +13,7 @@ else
 endif
 
 # Variables
-GOLANGCI_VERSION=v1.60.3
+GOLANGCI_VERSION=v1.62.2
 
 vet:
 	go vet ${GO_PACKAGES}
