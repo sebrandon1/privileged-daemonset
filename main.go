@@ -6,7 +6,7 @@ import (
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
-	v1core "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -37,7 +37,7 @@ const (
 )
 
 //nolint:funlen
-func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion string, labelsMap map[string]string, cpuReq, cpuLim, memReq, memLim string) *appsv1.DaemonSet {
+func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion string, labelsMap map[string]string, cpuReq, cpuLim, memReq, memLim string, pullPolicy corev1.PullPolicy) *appsv1.DaemonSet {
 	dsAnnotations := make(map[string]string)
 	dsAnnotations["debug.openshift.io/source-container"] = containerName
 	dsAnnotations["openshift.io/scc"] = "node-exporter"
@@ -51,11 +51,11 @@ func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion
 
 	rootUser := pointer.To(int64(0))
 
-	container := v1core.Container{
+	container := corev1.Container{
 		Name:            containerName,
 		Image:           imageWithVersion,
-		ImagePullPolicy: "IfNotPresent",
-		SecurityContext: &v1core.SecurityContext{
+		ImagePullPolicy: pullPolicy,
+		SecurityContext: &corev1.SecurityContext{
 			Privileged: pointer.To(true),
 			RunAsUser:  rootUser,
 		},
@@ -63,7 +63,7 @@ func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion
 		StdinOnce:              true,
 		TerminationMessagePath: "/dev/termination-log",
 		TTY:                    true,
-		VolumeMounts: []v1core.VolumeMount{
+		VolumeMounts: []corev1.VolumeMount{
 			{
 				MountPath: "/host",
 				Name:      "host",
@@ -71,14 +71,14 @@ func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion
 		},
 	}
 	// setting CPU and memory request/limits
-	container.Resources.Requests = v1core.ResourceList{}
-	container.Resources.Limits = v1core.ResourceList{}
-	container.Resources.Requests[v1core.ResourceCPU] = resource.MustParse(cpuReq)
-	container.Resources.Limits[v1core.ResourceCPU] = resource.MustParse(cpuLim)
-	container.Resources.Requests[v1core.ResourceMemory] = resource.MustParse(memReq)
-	container.Resources.Limits[v1core.ResourceMemory] = resource.MustParse(memLim)
-	preemptPolicyLowPrio := v1core.PreemptLowerPriority
-	hostPathTypeDir := v1core.HostPathDirectory
+	container.Resources.Requests = corev1.ResourceList{}
+	container.Resources.Limits = corev1.ResourceList{}
+	container.Resources.Requests[corev1.ResourceCPU] = resource.MustParse(cpuReq)
+	container.Resources.Limits[corev1.ResourceCPU] = resource.MustParse(cpuLim)
+	container.Resources.Requests[corev1.ResourceMemory] = resource.MustParse(memReq)
+	container.Resources.Limits[corev1.ResourceMemory] = resource.MustParse(memLim)
+	preemptPolicyLowPrio := corev1.PreemptLowerPriority
+	hostPathTypeDir := corev1.HostPathDirectory
 	tolerationsSeconds := pointer.To(int64(tolerationsPeriodSecs))
 
 	return &appsv1.DaemonSet{
@@ -92,19 +92,19 @@ func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion
 			Selector: &metav1.LabelSelector{
 				MatchLabels: matchLabels,
 			},
-			Template: v1core.PodTemplateSpec{
+			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: matchLabels,
 				},
-				Spec: v1core.PodSpec{
+				Spec: corev1.PodSpec{
 					ServiceAccountName: roleSaName,
-					Containers:         []v1core.Container{container},
+					Containers:         []corev1.Container{container},
 					PreemptionPolicy:   &preemptPolicyLowPrio,
 					Priority:           pointer.To(int32(0)),
 					HostNetwork:        true,
 					HostIPC:            true,
 					HostPID:            true,
-					Tolerations: []v1core.Toleration{
+					Tolerations: []corev1.Toleration{
 						{
 							Effect:            "NoExecute",
 							Key:               "node.kubernetes.io/not-ready",
@@ -126,11 +126,11 @@ func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion
 							Key:    "node-role.kubernetes.io/control-plane",
 						},
 					},
-					Volumes: []v1core.Volume{
+					Volumes: []corev1.Volume{
 						{
 							Name: "host",
-							VolumeSource: v1core.VolumeSource{
-								HostPath: &v1core.HostPathVolumeSource{
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
 									Path: "/",
 									Type: &hostPathTypeDir,
 								},
@@ -202,14 +202,14 @@ func IsDaemonSetReady(daemonSetName, namespace, image string) bool {
 
 // This function is used to create a daemonset with the specified name, namespace, container name and image with the timeout to check
 // if the deployment is ready and all daemonset pods are running fine
-func CreateDaemonSet(daemonSetName, namespace, containerName, imageWithVersion string, labels map[string]string, timeout time.Duration, cpuReq, cpuLim, memReq, memLim string) (aPodList *v1core.PodList, err error) {
+func CreateDaemonSet(daemonSetName, namespace, containerName, imageWithVersion string, labels map[string]string, timeout time.Duration, cpuReq, cpuLim, memReq, memLim string, pullPolicy corev1.PullPolicy) (aPodList *corev1.PodList, err error) {
 	// first, initialize the namespace
 	err = initNamespace(namespace)
 	if err != nil {
 		return aPodList, fmt.Errorf("failed to initialize the privileged daemonset namespace, err: %v", err)
 	}
 
-	daemonSet := createDaemonSetsTemplate(daemonSetName, namespace, containerName, imageWithVersion, labels, cpuReq, cpuLim, memReq, memLim)
+	daemonSet := createDaemonSetsTemplate(daemonSetName, namespace, containerName, imageWithVersion, labels, cpuReq, cpuLim, memReq, memLim, pullPolicy)
 
 	if doesDaemonSetExist(daemonSetName, namespace) {
 		err = DeleteDaemonSet(daemonSetName, namespace)
@@ -318,7 +318,7 @@ func ConfigurePrivilegedServiceAccount(namespace string) error {
 		},
 	}
 
-	aServiceAccount := v1core.ServiceAccount{
+	aServiceAccount := corev1.ServiceAccount{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ServiceAccount",
 			APIVersion: "v1",
@@ -390,7 +390,7 @@ func namespaceWaitForDeletion(nsName string, timeout time.Duration) error {
 // Create creates a new namespace with the given name.
 // If the namespace exists, it returns.
 func namespaceCreate(namespace string) error {
-	_, err := daemonsetClient.K8sClient.CoreV1().Namespaces().Create(context.Background(), &v1core.Namespace{
+	_, err := daemonsetClient.K8sClient.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: namespace,
 		}},
