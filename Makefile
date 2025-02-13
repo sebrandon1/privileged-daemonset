@@ -12,15 +12,8 @@ else
   GOBIN=$(shell go env GOBIN)
 endif
 
-# Variables
-GOLANGCI_VERSION=v1.64.3
-
 vet:
 	go vet ${GO_PACKAGES}
-
-# Install golangci-lint	
-install-lint:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GO_PATH}/bin ${GOLANGCI_VERSION}
 
 # Run configured linters
 lint:
