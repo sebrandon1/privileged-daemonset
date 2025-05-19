@@ -36,7 +36,7 @@ const (
 	namespaceDeleteTimeout = time.Minute * 2
 )
 
-//nolint:funlen
+//nolint:funlen,lll
 func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion string, labelsMap map[string]string, cpuReq, cpuLim, memReq, memLim string, pullPolicy corev1.PullPolicy) *appsv1.DaemonSet {
 	dsAnnotations := make(map[string]string)
 	dsAnnotations["debug.openshift.io/source-container"] = containerName
@@ -150,7 +150,8 @@ func DeleteDaemonSet(daemonSetName, namespace string) error {
 	)
 
 	deletePolicy := metav1.DeletePropagationForeground
-	err := daemonsetClient.K8sClient.AppsV1().DaemonSets(namespace).Delete(context.TODO(), daemonSetName, metav1.DeleteOptions{PropagationPolicy: &deletePolicy})
+	err := daemonsetClient.K8sClient.AppsV1().DaemonSets(namespace).Delete(context.TODO(),
+		daemonSetName, metav1.DeleteOptions{PropagationPolicy: &deletePolicy})
 	if err != nil {
 		return fmt.Errorf("daemonset %q deletion failed, err: %v", daemonSetName, err)
 	}
@@ -173,7 +174,8 @@ func DeleteDaemonSet(daemonSetName, namespace string) error {
 
 // Check if the daemonset exists
 func doesDaemonSetExist(daemonSetName, namespace string) bool {
-	_, err := daemonsetClient.K8sClient.AppsV1().DaemonSets(namespace).Get(context.TODO(), daemonSetName, metav1.GetOptions{})
+	_, err := daemonsetClient.K8sClient.AppsV1().DaemonSets(namespace).
+		Get(context.TODO(), daemonSetName, metav1.GetOptions{})
 	return err == nil
 }
 
@@ -181,7 +183,8 @@ func IsDaemonSetReady(daemonSetName, namespace, image string) bool {
 	const hoursPerWeek = 168 // 7 days
 
 	// The daemonset will be considered not ready if it does not exist
-	ds, err := daemonsetClient.K8sClient.AppsV1().DaemonSets(namespace).Get(context.TODO(), daemonSetName, metav1.GetOptions{})
+	ds, err := daemonsetClient.K8sClient.AppsV1().DaemonSets(namespace).
+		Get(context.TODO(), daemonSetName, metav1.GetOptions{})
 	if err != nil {
 		return false
 	}
@@ -200,25 +203,31 @@ func IsDaemonSetReady(daemonSetName, namespace, image string) bool {
 	return isDaemonSetReady(&ds.Status)
 }
 
-// This function is used to create a daemonset with the specified name, namespace, container name and image with the timeout to check
+// This function is used to create a daemonset with the specified
+// name, namespace, container name and image with the timeout to check
 // if the deployment is ready and all daemonset pods are running fine
-func CreateDaemonSet(daemonSetName, namespace, containerName, imageWithVersion string, labels map[string]string, timeout time.Duration, cpuReq, cpuLim, memReq, memLim string, pullPolicy corev1.PullPolicy) (aPodList *corev1.PodList, err error) {
+func CreateDaemonSet(daemonSetName, namespace, containerName, imageWithVersion string,
+	labels map[string]string, timeout time.Duration, cpuReq, cpuLim, memReq,
+	memLim string, pullPolicy corev1.PullPolicy) (aPodList *corev1.PodList, err error) {
 	// first, initialize the namespace
 	err = initNamespace(namespace)
 	if err != nil {
 		return aPodList, fmt.Errorf("failed to initialize the privileged daemonset namespace, err: %v", err)
 	}
 
-	daemonSet := createDaemonSetsTemplate(daemonSetName, namespace, containerName, imageWithVersion, labels, cpuReq, cpuLim, memReq, memLim, pullPolicy)
+	daemonSet := createDaemonSetsTemplate(daemonSetName, namespace, containerName,
+		imageWithVersion, labels, cpuReq, cpuLim, memReq, memLim, pullPolicy)
 
 	if doesDaemonSetExist(daemonSetName, namespace) {
 		err = DeleteDaemonSet(daemonSetName, namespace)
 		if err != nil {
-			return aPodList, fmt.Errorf("failed to delete daemonset %q, err: %v", daemonSetName, err)
+			return aPodList, fmt.Errorf("failed to delete daemonset %q, err: %v",
+				daemonSetName, err)
 		}
 	}
 
-	_, err = daemonsetClient.K8sClient.AppsV1().DaemonSets(namespace).Create(context.TODO(), daemonSet, metav1.CreateOptions{})
+	_, err = daemonsetClient.K8sClient.AppsV1().DaemonSets(namespace).
+		Create(context.TODO(), daemonSet, metav1.CreateOptions{})
 	if err != nil {
 		return aPodList, err
 	}
@@ -228,7 +237,8 @@ func CreateDaemonSet(daemonSetName, namespace, containerName, imageWithVersion s
 		return aPodList, err
 	}
 
-	aPodList, err = daemonsetClient.K8sClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: "name=" + daemonSetName})
+	aPodList, err = daemonsetClient.K8sClient.CoreV1().Pods(namespace).
+		List(context.TODO(), metav1.ListOptions{LabelSelector: "name=" + daemonSetName})
 	if err != nil {
 		return aPodList, err
 	}
@@ -247,7 +257,8 @@ func WaitDaemonsetReady(namespace, name string, timeout time.Duration) error {
 	nodesCount := int32(len(nodes.Items))
 	isReady := false
 	for start := time.Now(); !isReady && time.Since(start) < timeout; {
-		daemonSet, err := daemonsetClient.K8sClient.AppsV1().DaemonSets(namespace).Get(context.Background(), name, metav1.GetOptions{})
+		daemonSet, err := daemonsetClient.K8sClient.AppsV1().
+			DaemonSets(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("failed to get daemonset %q (ns %q), err: %v", name, namespace, err)
 		}
@@ -330,18 +341,21 @@ func ConfigurePrivilegedServiceAccount(namespace string) error {
 	}
 
 	// create role
-	_, err := daemonsetClient.K8sClient.RbacV1().Roles(namespace).Create(context.TODO(), &aRole, metav1.CreateOptions{})
+	_, err := daemonsetClient.K8sClient.RbacV1().Roles(namespace).
+		Create(context.TODO(), &aRole, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("error creating role, err=%s", err)
 	}
 
 	// create rolebinding
-	_, err = daemonsetClient.K8sClient.RbacV1().RoleBindings(namespace).Create(context.TODO(), &aRoleBinding, metav1.CreateOptions{})
+	_, err = daemonsetClient.K8sClient.RbacV1().RoleBindings(namespace).
+		Create(context.TODO(), &aRoleBinding, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("error creating role bindings, err=%s", err)
 	}
 	// create service account
-	_, err = daemonsetClient.K8sClient.CoreV1().ServiceAccounts(namespace).Create(context.TODO(), &aServiceAccount, metav1.CreateOptions{})
+	_, err = daemonsetClient.K8sClient.CoreV1().ServiceAccounts(namespace).
+		Create(context.TODO(), &aServiceAccount, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("error creating service account, err=%s", err)
 	}
@@ -371,31 +385,35 @@ func initNamespace(namespace string) (err error) {
 
 // WaitForCondition waits until the pod will have specified condition type with the expected status
 func namespaceIsPresent(namespace string) bool {
-	_, err := daemonsetClient.K8sClient.CoreV1().Namespaces().Get(context.Background(), namespace, metav1.GetOptions{})
+	_, err := daemonsetClient.K8sClient.CoreV1().Namespaces().
+		Get(context.TODO(), namespace, metav1.GetOptions{})
 	return err == nil
 }
 
 // WaitForDeletion waits until the namespace will be removed from the cluster
 func namespaceWaitForDeletion(nsName string, timeout time.Duration) error {
 	//nolint:revive
-	return wait.PollUntilContextTimeout(context.TODO(), time.Second, timeout, true, func(ctx context.Context) (bool, error) {
-		_, err := daemonsetClient.K8sClient.CoreV1().Namespaces().Get(context.Background(), nsName, metav1.GetOptions{})
-		if k8serrors.IsNotFound(err) {
-			return true, nil
-		}
-		return false, nil
-	})
+	return wait.PollUntilContextTimeout(context.TODO(),
+		time.Second, timeout, true, func(ctx context.Context) (bool, error) {
+			_, err := daemonsetClient.K8sClient.CoreV1().Namespaces().
+				Get(context.TODO(), nsName, metav1.GetOptions{})
+			if k8serrors.IsNotFound(err) {
+				return true, nil
+			}
+			return false, nil
+		})
 }
 
 // Create creates a new namespace with the given name.
 // If the namespace exists, it returns.
 func namespaceCreate(namespace string) error {
-	_, err := daemonsetClient.K8sClient.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: namespace,
-		}},
-		metav1.CreateOptions{},
-	)
+	_, err := daemonsetClient.K8sClient.CoreV1().Namespaces().
+		Create(context.TODO(), &corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: namespace,
+			}},
+			metav1.CreateOptions{},
+		)
 
 	if k8serrors.IsAlreadyExists(err) {
 		return nil
@@ -408,7 +426,8 @@ func DeleteNamespaceIfPresent(namespace string) (err error) {
 	if !namespaceIsPresent(namespace) {
 		return nil
 	}
-	err = daemonsetClient.K8sClient.CoreV1().Namespaces().Delete(context.Background(), namespace, metav1.DeleteOptions{})
+	err = daemonsetClient.K8sClient.CoreV1().Namespaces().
+		Delete(context.TODO(), namespace, metav1.DeleteOptions{})
 	if err != nil {
 		return fmt.Errorf("could not delete namespace %q, err: %v", namespace, err)
 	}
