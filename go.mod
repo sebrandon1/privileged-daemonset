@@ -3,9 +3,9 @@ module github.com/redhat-best-practices-for-k8s/privileged-daemonset
 go 1.24.4
 
 require (
-	k8s.io/api v0.33.2
-	k8s.io/apimachinery v0.33.2
-	k8s.io/client-go v0.33.2
+	k8s.io/api v0.33.3
+	k8s.io/apimachinery v0.33.3
+	k8s.io/client-go v0.33.3
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738
 )
 
