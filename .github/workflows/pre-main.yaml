@@ -30,7 +30,7 @@ jobs:
         run: echo "::remove-matcher owner=go::"
 
       - name: Golangci-lint
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
         with:
           args: --timeout 10m0s
 
