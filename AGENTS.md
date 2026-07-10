@@ -69,15 +69,15 @@ The library exports these primary functions:
 ## Key Dependencies
 
 Primary dependencies (from go.mod):
-- `k8s.io/api v0.34.1` - Kubernetes API types
-- `k8s.io/apimachinery v0.34.1` - Kubernetes API machinery utilities
-- `k8s.io/client-go v0.34.1` - Kubernetes client library
+- `k8s.io/api v0.36.1` - Kubernetes API types
+- `k8s.io/apimachinery v0.36.1` - Kubernetes API machinery utilities
+- `k8s.io/client-go v0.36.1` - Kubernetes client library
 - `k8s.io/utils` - Kubernetes utility functions (pointer helpers)
 
 ## Development Guidelines
 
 ### Go Version
-This repository uses Go 1.25.3. Ensure your local environment matches this version.
+This repository uses Go 1.26.0. Ensure your local environment matches this version.
 
 ### Linting
 The project uses golangci-lint with extensive configuration in `.golangci.yml`. Enabled linters include:
@@ -104,13 +104,13 @@ It performs:
 ### Usage Pattern
 
 ```go
-import k8sPriviledgedDs "github.com/redhat-best-practices-for-k8s/privileged-daemonset"
+import k8sPrivilegedDs "github.com/redhat-best-practices-for-k8s/privileged-daemonset"
 
 // 1. Set the Kubernetes client
-k8sPriviledgedDs.SetDaemonSetClient(myK8sInterface)
+k8sPrivilegedDs.SetDaemonSetClient(myK8sInterface)
 
 // 2. Create a privileged DaemonSet
-pods, err := k8sPriviledgedDs.CreateDaemonSet(
+pods, err := k8sPrivilegedDs.CreateDaemonSet(
     "my-ds",           // DaemonSet name
     "my-namespace",    // Namespace
     "container-name",  // Container name
@@ -123,7 +123,7 @@ pods, err := k8sPriviledgedDs.CreateDaemonSet(
 )
 
 // 3. Delete when done
-err = k8sPriviledgedDs.DeleteDaemonSet("my-ds", "my-namespace")
+err = k8sPrivilegedDs.DeleteDaemonSet("my-ds", "my-namespace")
 ```
 
 ### Important Implementation Details
