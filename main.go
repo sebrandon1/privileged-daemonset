@@ -34,6 +34,7 @@ const (
 	roleSaName             = "privileged-ds"
 	waitingTime            = 5 * time.Second
 	namespaceDeleteTimeout = time.Minute * 2
+	hostVolumeName         = "host"
 )
 
 //nolint:funlen,lll
@@ -66,7 +67,7 @@ func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion
 		VolumeMounts: []corev1.VolumeMount{
 			{
 				MountPath: "/host",
-				Name:      "host",
+				Name:      hostVolumeName,
 			},
 		},
 	}
@@ -128,7 +129,7 @@ func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion
 					},
 					Volumes: []corev1.Volume{
 						{
-							Name: "host",
+							Name: hostVolumeName,
 							VolumeSource: corev1.VolumeSource{
 								HostPath: &corev1.HostPathVolumeSource{
 									Path: "/",
