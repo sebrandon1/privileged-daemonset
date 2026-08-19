@@ -43,13 +43,17 @@ The repository has a simple structure with a single main package:
 ```
 privileged-daemonset/
 ├── main.go           # Core library implementation (all exported functions)
+├── main_test.go      # Unit tests for library functions
 ├── go.mod            # Go module definition
 ├── go.sum            # Dependency checksums
 ├── Makefile          # Build automation
 ├── .golangci.yml     # Linter configuration
 ├── .github/
 │   └── workflows/
-│       └── pre-main.yaml   # CI workflow for linting and vetting
+│       ├── pre-main.yaml   # CI workflow for linting and vetting
+│       └── scorecard.yml   # OpenSSF Scorecard security analysis
+├── AGENTS.md         # AI agent guidance documentation
+├── CLAUDE.md         # Symlink to AGENTS.md
 ├── LICENSE           # Apache 2.0 license
 └── README.md         # Basic usage documentation
 ```
@@ -69,9 +73,9 @@ The library exports these primary functions:
 ## Key Dependencies
 
 Primary dependencies (from go.mod):
-- `k8s.io/api v0.36.1` - Kubernetes API types
-- `k8s.io/apimachinery v0.36.1` - Kubernetes API machinery utilities
-- `k8s.io/client-go v0.36.1` - Kubernetes client library
+- `k8s.io/api v0.36.3` - Kubernetes API types
+- `k8s.io/apimachinery v0.36.3` - Kubernetes API machinery utilities
+- `k8s.io/client-go v0.36.3` - Kubernetes client library
 - `k8s.io/utils` - Kubernetes utility functions (pointer helpers)
 
 ## Development Guidelines
