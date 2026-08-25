@@ -285,35 +285,6 @@ func TestCreateDaemonSetsTemplateResources(t *testing.T) {
 	}
 }
 
-func TestCreateDaemonSetsTemplateResourcesWithoutLimits(t *testing.T) {
-	// Create DaemonSet with empty limit strings
-	ds := createDaemonSetsTemplate(
-		"my-ds", "my-ns", "my-container", "my-image:v1",
-		map[string]string{"app": "test"},
-		"100m", "", "100M", "", // Empty CPU and memory limits
-		corev1.PullAlways,
-	)
-	c := ds.Spec.Template.Spec.Containers[0]
-
-	// Verify requests are set
-	cpuReq := c.Resources.Requests[corev1.ResourceCPU]
-	if cpuReq.String() != "100m" {
-		t.Errorf("CPU request = %q, want %q", cpuReq.String(), "100m")
-	}
-	memReq := c.Resources.Requests[corev1.ResourceMemory]
-	if memReq.String() != "100M" {
-		t.Errorf("Memory request = %q, want %q", memReq.String(), "100M")
-	}
-
-	// Verify limits are NOT set
-	if _, exists := c.Resources.Limits[corev1.ResourceCPU]; exists {
-		t.Error("CPU limit should not be set when empty string is passed")
-	}
-	if _, exists := c.Resources.Limits[corev1.ResourceMemory]; exists {
-		t.Error("Memory limit should not be set when empty string is passed")
-	}
-}
-
 func TestCreateDaemonSetsTemplateMixedLimits(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -322,6 +293,13 @@ func TestCreateDaemonSetsTemplateMixedLimits(t *testing.T) {
 		wantCPULimit bool
 		wantMemLimit bool
 	}{
+		{
+			name:         "No limits",
+			cpuLim:       "",
+			memLim:       "",
+			wantCPULimit: false,
+			wantMemLimit: false,
+		},
 		{
 			name:         "CPU limit only",
 			cpuLim:       "200m",
