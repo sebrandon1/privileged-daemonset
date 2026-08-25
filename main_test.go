@@ -314,6 +314,53 @@ func TestCreateDaemonSetsTemplateResourcesWithoutLimits(t *testing.T) {
 	}
 }
 
+func TestCreateDaemonSetsTemplateMixedLimits(t *testing.T) {
+	tests := []struct {
+		name         string
+		cpuLim       string
+		memLim       string
+		wantCPULimit bool
+		wantMemLimit bool
+	}{
+		{
+			name:         "CPU limit only",
+			cpuLim:       "200m",
+			memLim:       "",
+			wantCPULimit: true,
+			wantMemLimit: false,
+		},
+		{
+			name:         "Memory limit only",
+			cpuLim:       "",
+			memLim:       "128Mi",
+			wantCPULimit: false,
+			wantMemLimit: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ds := createDaemonSetsTemplate(
+				"my-ds", "my-ns", "my-container", "my-image:v1",
+				map[string]string{"app": "test"},
+				"100m", tt.cpuLim, "100M", tt.memLim,
+				corev1.PullAlways,
+			)
+			c := ds.Spec.Template.Spec.Containers[0]
+
+			_, cpuExists := c.Resources.Limits[corev1.ResourceCPU]
+			if cpuExists != tt.wantCPULimit {
+				t.Errorf("CPU limit exists = %v, want %v", cpuExists, tt.wantCPULimit)
+			}
+
+			_, memExists := c.Resources.Limits[corev1.ResourceMemory]
+			if memExists != tt.wantMemLimit {
+				t.Errorf("Memory limit exists = %v, want %v", memExists, tt.wantMemLimit)
+			}
+		})
+	}
+}
+
 func TestCreateDaemonSetsTemplateNilLabels(t *testing.T) {
 	ds := createDaemonSetsTemplate(
 		"ds", "ns", "c", "img:v1",
