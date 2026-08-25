@@ -74,10 +74,18 @@ func createDaemonSetsTemplate(dsName, namespace, containerName, imageWithVersion
 	// setting CPU and memory request/limits
 	container.Resources.Requests = corev1.ResourceList{}
 	container.Resources.Limits = corev1.ResourceList{}
+
+	// Always set requests (required for scheduling)
 	container.Resources.Requests[corev1.ResourceCPU] = resource.MustParse(cpuReq)
-	container.Resources.Limits[corev1.ResourceCPU] = resource.MustParse(cpuLim)
 	container.Resources.Requests[corev1.ResourceMemory] = resource.MustParse(memReq)
-	container.Resources.Limits[corev1.ResourceMemory] = resource.MustParse(memLim)
+
+	// Only set limits if provided (optional)
+	if cpuLim != "" {
+		container.Resources.Limits[corev1.ResourceCPU] = resource.MustParse(cpuLim)
+	}
+	if memLim != "" {
+		container.Resources.Limits[corev1.ResourceMemory] = resource.MustParse(memLim)
+	}
 	preemptPolicyLowPrio := corev1.PreemptLowerPriority
 	hostPathTypeDir := corev1.HostPathDirectory
 	tolerationsSeconds := pointer.To(int64(tolerationsPeriodSecs))
